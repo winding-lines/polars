@@ -1,4 +1,5 @@
 //! Read parquet files in parallel from the Object Store without a third party crate.
+use std::io::Write;
 use std::ops::Range;
 use std::sync::Arc;
 
@@ -224,5 +225,28 @@ impl FetchRowGroups for FetchRowGroupsFromObjectStore {
         }
 
         Ok(mmap::ColumnStore::Fetched(downloaded_per_filepos))
+    }
+}
+
+impl Write for ParquetObjectStore {
+    #[tokio::main(flavor = "current_thread")]
+    async fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let bytes: std::io::Bytes<u8> = std::io::Bytes::from(buf);
+        self.store
+            .lock()
+            .await
+            .put(&self.path, &bytes)
+            .await
+            .map(|_| buf.len())
+            .map_err(|e| {
+                std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("object store error {e:?}"),
+                )
+            })
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        todo!()
     }
 }
