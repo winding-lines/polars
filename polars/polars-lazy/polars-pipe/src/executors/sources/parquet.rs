@@ -7,7 +7,7 @@ use polars_core::POOL;
 use polars_io::parquet::{BatchedParquetReader, ParquetReader};
 #[cfg(feature = "async")]
 use polars_io::prelude::ParquetAsyncReader;
-use polars_io::{is_cloud_url, SerReader};
+use polars_io::{is_object_store_url, SerReader};
 use polars_plan::prelude::ParquetOptions;
 use polars_utils::IdxSize;
 
@@ -36,7 +36,7 @@ impl ParquetSource {
         });
 
         let chunk_size = std::cmp::max(CHUNK_SIZE * 12 / POOL.current_num_threads(), 10_000);
-        let batched_reader = if is_cloud_url(&path) {
+        let batched_reader = if is_object_store_url(&path) {
             #[cfg(not(feature = "async"))]
             {
                 panic!(

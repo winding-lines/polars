@@ -108,10 +108,10 @@ impl LogicalPlanBuilder {
         low_memory: bool,
         cloud_options: Option<CloudOptions>,
     ) -> PolarsResult<Self> {
-        use polars_io::{is_cloud_url, SerReader as _};
+        use polars_io::{is_object_store_url, SerReader as _};
 
         let path = path.into();
-        let file_info: PolarsResult<FileInfo> = if is_cloud_url(&path) {
+        let file_info: PolarsResult<FileInfo> = if is_object_store_url(&path) {
             #[cfg(not(feature = "async"))]
             panic!(
                 "One or more of the cloud storage features ('aws', 'gcp', ...) must be enabled."

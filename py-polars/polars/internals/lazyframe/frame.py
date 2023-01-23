@@ -58,7 +58,7 @@ from polars.utils import (
 )
 
 try:
-    from polars.polars import PyLazyFrame
+    from polars.polars import PyLazyFrame, is_object_store_url
 
     _DOCUMENTING = False
 except ImportError:
@@ -206,7 +206,7 @@ class LazyFrame:
 
         """
         # try fsspec scanner
-        if not pli._is_local_file(file):
+        if not (pli._is_local_file(file) or is_object_store_url(file)):
             scan = pli._scan_parquet_fsspec(file, storage_options)
             if n_rows:
                 scan = scan.head(n_rows)

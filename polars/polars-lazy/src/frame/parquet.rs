@@ -5,7 +5,7 @@ use polars_core::prelude::*;
 #[cfg(feature = "async")]
 use polars_io::async_glob;
 use polars_io::parquet::ParallelStrategy;
-use polars_io::{is_cloud_url, RowCount};
+use polars_io::{is_object_store_url, RowCount};
 
 use crate::prelude::*;
 
@@ -105,12 +105,12 @@ impl LazyFrame {
         Self::concat_impl(lfs, args)
     }
 
-    /// Create a LazyFrame directly from a parquet scan.
+    // Create a LazyFrame directly from a parquet scan.
     pub fn scan_parquet(path: impl AsRef<Path>, args: ScanArgsParquet) -> PolarsResult<Self> {
         let path = path.as_ref();
         let path_str = path.to_string_lossy();
         if path_str.contains('*') {
-            let paths = if is_cloud_url(path) {
+            let paths = if is_object_store_url(path) {
                 #[cfg(feature = "async")]
                 {
                     Box::new(
