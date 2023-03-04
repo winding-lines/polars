@@ -111,7 +111,7 @@
         CsvReader::from_path(<span class="kw-2">&amp;</span><span class="self">self</span>.path)
             .unwrap()
             .has_header(<span class="self">self</span>.options.has_header)
-            .with_schema(<span class="kw-2">&amp;</span><span class="self">self</span>.schema)
+            .with_dtypes(<span class="prelude-val">Some</span>(<span class="self">self</span>.schema.clone()))
             .with_delimiter(<span class="self">self</span>.options.delimiter)
             .with_ignore_errors(<span class="self">self</span>.options.ignore_errors)
             .with_skip_rows(<span class="self">self</span>.options.skip_rows)
@@ -144,9 +144,9 @@
         };
 
         <span class="kw">let </span>profile_name = <span class="kw">if </span>state.has_node_timer() {
-            <span class="kw">let </span><span class="kw-2">mut </span>ids = <span class="macro">vec!</span>[<span class="self">self</span>.path.to_string_lossy().to_string()];
+            <span class="kw">let </span><span class="kw-2">mut </span>ids = <span class="macro">vec!</span>[<span class="self">self</span>.path.to_string_lossy().into()];
             <span class="kw">if </span><span class="self">self</span>.predicate.is_some() {
-                ids.push(<span class="string">&quot;predicate&quot;</span>.to_string())
+                ids.push(<span class="string">&quot;predicate&quot;</span>.into())
             }
             <span class="kw">let </span>name = column_delimited(<span class="string">&quot;csv&quot;</span>.to_string(), <span class="kw-2">&amp;</span>ids);
             Cow::Owned(name)

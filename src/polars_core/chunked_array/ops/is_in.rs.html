@@ -441,7 +441,6 @@
 <a href="#441" id="441">441</a>
 <a href="#442" id="442">442</a>
 <a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::hash::Hash;
 
 <span class="kw">use </span>hashbrown::hash_set::HashSet;
@@ -674,8 +673,7 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">impl </span>IsIn <span class="kw">for </span>BinaryChunked {
+<span class="kw">impl </span>IsIn <span class="kw">for </span>BinaryChunked {
     <span class="kw">fn </span>is_in(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>Series) -&gt; PolarsResult&lt;BooleanChunked&gt; {
         <span class="kw">match </span>other.dtype() {
             DataType::List(dt) <span class="kw">if </span>DataType::Binary == <span class="kw-2">**</span>dt =&gt; {

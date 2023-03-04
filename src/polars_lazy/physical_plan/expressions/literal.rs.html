@@ -169,7 +169,6 @@
 <a href="#169" id="169">169</a>
 <a href="#170" id="170">170</a>
 <a href="#171" id="171">171</a>
-<a href="#172" id="172">172</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::borrow::Cow;
 <span class="kw">use </span>std::ops::Deref;
 
@@ -247,8 +246,7 @@
                 }
             },
             Utf8(v) =&gt; Utf8Chunked::full(NAME, v, <span class="number">1</span>).into_series(),
-            <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-            </span>Binary(v) =&gt; BinaryChunked::full(NAME, v, <span class="number">1</span>).into_series(),
+            Binary(v) =&gt; BinaryChunked::full(NAME, v, <span class="number">1</span>).into_series(),
             <span class="attr">#[cfg(feature = <span class="string">&quot;temporal&quot;</span>)]
             </span>DateTime(ndt, tu) =&gt; {
                 <span class="kw">use </span>polars_core::chunked_array::temporal::conversion::<span class="kw-2">*</span>;

@@ -400,7 +400,6 @@
 <a href="#400" id="400">400</a>
 <a href="#401" id="401">401</a>
 <a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Comparison operations on Series.
 
 </span><span class="attr">#[cfg(any(
@@ -425,8 +424,7 @@
         <span class="kw">match </span>lhs.dtype() {
             DataType::Boolean =&gt; lhs.bool().unwrap().<span class="macro-nonterminal">$method</span>(rhs.bool().unwrap()),
             DataType::Utf8 =&gt; lhs.utf8().unwrap().<span class="macro-nonterminal">$method</span>(rhs.utf8().unwrap()),
-            <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-            </span>DataType::Binary =&gt; lhs.binary().unwrap().<span class="macro-nonterminal">$method</span>(rhs.binary().unwrap()),
+            DataType::Binary =&gt; lhs.binary().unwrap().<span class="macro-nonterminal">$method</span>(rhs.binary().unwrap()),
             DataType::UInt8 =&gt; lhs.u8().unwrap().<span class="macro-nonterminal">$method</span>(rhs.u8().unwrap()),
             DataType::UInt16 =&gt; lhs.u16().unwrap().<span class="macro-nonterminal">$method</span>(rhs.u16().unwrap()),
             DataType::UInt32 =&gt; lhs.u32().unwrap().<span class="macro-nonterminal">$method</span>(rhs.u32().unwrap()),

@@ -303,7 +303,6 @@
 <span class="attr">#[cfg(feature = <span class="string">&quot;merge_sorted&quot;</span>)]
 </span><span class="kw">mod </span>merge_sorted;
 <span class="kw">mod </span>rename;
-
 <span class="kw">use </span>std::borrow::Cow;
 <span class="kw">use </span>std::fmt::{Debug, Display, Formatter};
 <span class="kw">use </span>std::sync::Arc;
@@ -313,6 +312,7 @@
 </span><span class="kw">use </span>polars_core::IUseStringCache;
 <span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
 </span><span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>smartstring::alias::String <span class="kw">as </span>SmartString;
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;merge_sorted&quot;</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::logical_plan::functions::merge_sorted::merge_sorted;
@@ -360,13 +360,13 @@
         </span>column: Arc&lt;str&gt;,
     },
     Rename {
-        existing: Arc&lt;Vec&lt;String&gt;&gt;,
-        new: Arc&lt;Vec&lt;String&gt;&gt;,
+        existing: Arc&lt;Vec&lt;SmartString&gt;&gt;,
+        new: Arc&lt;Vec&lt;SmartString&gt;&gt;,
         <span class="comment">// A column name gets swapped with an existing column
         </span>swapping: bool,
     },
     Drop {
-        names: Arc&lt;Vec&lt;String&gt;&gt;,
+        names: Arc&lt;Vec&lt;SmartString&gt;&gt;,
     },
 }
 

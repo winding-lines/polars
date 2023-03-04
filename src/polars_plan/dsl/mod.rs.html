@@ -2170,15 +2170,13 @@
 <a href="#2170" id="2170">2170</a>
 <a href="#2171" id="2171">2171</a>
 <a href="#2172" id="2172">2172</a>
-<a href="#2173" id="2173">2173</a>
-</pre><pre class="rust"><code><span class="doccomment">//! Domain specific language for the Lazy api.
+</pre><pre class="rust"><code><span class="doccomment">//! Domain specific language for the Lazy API.
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;dtype-categorical&quot;</span>)]
 </span><span class="kw">pub mod </span>cat;
 <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-categorical&quot;</span>)]
 </span><span class="kw">pub use </span>cat::<span class="kw-2">*</span>;
 <span class="kw">mod </span>arithmetic;
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">pub mod </span>binary;
+<span class="kw">pub mod </span>binary;
 <span class="attr">#[cfg(feature = <span class="string">&quot;temporal&quot;</span>)]
 </span><span class="kw">mod </span>dt;
 <span class="kw">mod </span>expr;
@@ -2219,7 +2217,8 @@
 <span class="attr">#[cfg(feature = <span class="string">&quot;is_in&quot;</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::utils::has_root_literal_expr;
 
-<span class="kw">pub fn </span>binary_expr(l: Expr, op: Operator, r: Expr) -&gt; Expr {
+<span class="doccomment">/// Compute `op(l, r)` (or equivalently `l op r`). `l` and `r` must have types compatible with the Operator.
+</span><span class="kw">pub fn </span>binary_expr(l: Expr, op: Operator, r: Expr) -&gt; Expr {
     Expr::BinaryExpr {
         left: Box::new(l),
         op,
@@ -4213,8 +4212,7 @@
         string::StringNameSpace(<span class="self">self</span>)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-    </span><span class="kw">pub fn </span>binary(<span class="self">self</span>) -&gt; binary::BinaryNameSpace {
+    <span class="kw">pub fn </span>binary(<span class="self">self</span>) -&gt; binary::BinaryNameSpace {
         binary::BinaryNameSpace(<span class="self">self</span>)
     }
 

@@ -399,11 +399,17 @@
 <a href="#399" id="399">399</a>
 <a href="#400" id="400">400</a>
 <a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::fmt::Formatter;
 <span class="kw">use </span>std::iter::FlatMap;
 <span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use </span>polars_core::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>smartstring::alias::String <span class="kw">as </span>SmartString;
 
 <span class="kw">use </span><span class="kw">crate</span>::logical_plan::iterator::ArenaExprIter;
 <span class="kw">use </span><span class="kw">crate</span>::logical_plan::Context;
@@ -411,7 +417,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// Utility to write comma delimited
-</span><span class="kw">pub fn </span>column_delimited(<span class="kw-2">mut </span>s: String, items: <span class="kw-2">&amp;</span>[String]) -&gt; String {
+</span><span class="kw">pub fn </span>column_delimited(<span class="kw-2">mut </span>s: String, items: <span class="kw-2">&amp;</span>[SmartString]) -&gt; String {
     s.push(<span class="string">&#39;(&#39;</span>);
     <span class="kw">for </span>c <span class="kw">in </span>items {
         s.push_str(c);
@@ -746,6 +752,10 @@
 
 <span class="kw">pub fn </span>aexpr_to_leaf_names(node: Node, arena: <span class="kw-2">&amp;</span>Arena&lt;AExpr&gt;) -&gt; Vec&lt;Arc&lt;str&gt;&gt; {
     aexpr_to_leaf_names_iter(node, arena).collect()
+}
+
+<span class="kw">pub fn </span>aexpr_to_leaf_name(node: Node, arena: <span class="kw-2">&amp;</span>Arena&lt;AExpr&gt;) -&gt; Arc&lt;str&gt; {
+    aexpr_to_leaf_names_iter(node, arena).next().unwrap()
 }
 
 <span class="doccomment">/// check if a selection/projection can be done on the downwards schema

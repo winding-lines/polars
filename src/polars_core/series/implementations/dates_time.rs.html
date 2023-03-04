@@ -519,6 +519,12 @@
 <a href="#519" id="519">519</a>
 <a href="#520" id="520">520</a>
 <a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
 </pre><pre class="rust"><code><span class="doccomment">//! This module exists to reduce compilation times.
 //!
 //! All the data types are backed by a physical type in memory e.g. Date -&gt; i32, Datetime-&gt; i64.
@@ -859,6 +865,12 @@
                         .unwrap()
                         .strftime(<span class="string">&quot;%Y-%m-%d&quot;</span>)
                         .into_series()),
+                    <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-datetime&quot;</span>)]
+                    </span>(DataType::Time, DataType::Datetime(<span class="kw">_</span>, <span class="kw">_</span>)) =&gt; {
+                        <span class="kw">let </span>msg = <span class="string">&quot;Cannot cast dtype: &#39;Time&#39; to dtype: &#39;Datetime&#39;.\n\
+                        Consider using &#39;dt.combine&#39; to combine times and dates.&quot;</span>;
+                        <span class="prelude-val">Err</span>(PolarsError::ComputeError(msg.into()))
+                    }
                     <span class="kw">_ </span>=&gt; <span class="self">self</span>.<span class="number">0</span>.cast(data_type),
                 }
             }

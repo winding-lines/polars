@@ -287,9 +287,13 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
 </pre><pre class="rust"><code><span class="kw">mod </span>from;
 
 <span class="kw">use </span>std::collections::BTreeMap;
+
+<span class="kw">use </span>smartstring::alias::String <span class="kw">as </span>SmartString;
 
 <span class="kw">use super</span>::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::datatypes::<span class="kw-2">*</span>;
@@ -452,7 +456,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.field
     }
 
-    <span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>String {
+    <span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>SmartString {
         <span class="self">self</span>.field.name()
     }
 
@@ -465,7 +469,7 @@
     }
 
     <span class="kw">pub fn </span>rename(<span class="kw-2">&amp;mut </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) {
-        <span class="self">self</span>.field.set_name(name.to_string())
+        <span class="self">self</span>.field.set_name(name.into())
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_apply_fields&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: F) -&gt; PolarsResult&lt;<span class="self">Self</span>&gt;

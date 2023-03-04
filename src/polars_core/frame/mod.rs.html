@@ -3697,6 +3697,21 @@
 <a href="#3697" id="3697">3697</a>
 <a href="#3698" id="3698">3698</a>
 <a href="#3699" id="3699">3699</a>
+<a href="#3700" id="3700">3700</a>
+<a href="#3701" id="3701">3701</a>
+<a href="#3702" id="3702">3702</a>
+<a href="#3703" id="3703">3703</a>
+<a href="#3704" id="3704">3704</a>
+<a href="#3705" id="3705">3705</a>
+<a href="#3706" id="3706">3706</a>
+<a href="#3707" id="3707">3707</a>
+<a href="#3708" id="3708">3708</a>
+<a href="#3709" id="3709">3709</a>
+<a href="#3710" id="3710">3710</a>
+<a href="#3711" id="3711">3711</a>
+<a href="#3712" id="3712">3712</a>
+<a href="#3713" id="3713">3713</a>
+<a href="#3714" id="3714">3714</a>
 </pre><pre class="rust"><code><span class="doccomment">//! DataFrame module.
 </span><span class="kw">use </span>std::borrow::Cow;
 <span class="kw">use </span>std::iter::{FromIterator, Iterator};
@@ -4841,7 +4856,7 @@
             }
             <span class="comment">// special case for literals
             </span><span class="kw">else if </span>height == <span class="number">0 </span>&amp;&amp; series.len() == <span class="number">1 </span>{
-                <span class="kw">let </span>s = series.slice(<span class="number">0</span>, <span class="number">0</span>);
+                <span class="kw">let </span>s = series.clear();
                 df.add_column_by_search(s)<span class="question-mark">?</span>;
                 <span class="prelude-val">Ok</span>(df)
             } <span class="kw">else </span>{
@@ -4858,6 +4873,16 @@
         <span class="kw">let </span>series = column.into_series();
         inner(<span class="self">self</span>, series)
     }
+
+    <span class="doccomment">/// Adds a column to the `DataFrame` without doing any checks
+    /// on length or duplicates.
+    ///
+    /// # Safety
+    /// The caller must ensure `column.len() == self.height()` .
+    </span><span class="kw">pub unsafe fn </span>with_column_unchecked(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column: Series) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
+        <span class="self">self</span>.get_columns_mut().push(column);
+        <span class="self">self
+    </span>}
 
     <span class="kw">fn </span>add_column_by_schema(<span class="kw-2">&amp;mut </span><span class="self">self</span>, s: Series, schema: <span class="kw-2">&amp;</span>Schema) -&gt; PolarsResult&lt;()&gt; {
         <span class="kw">let </span>name = s.name();
@@ -4908,7 +4933,7 @@
         }
         <span class="comment">// special case for literals
         </span><span class="kw">else if </span>height == <span class="number">0 </span>&amp;&amp; series.len() == <span class="number">1 </span>{
-            <span class="kw">let </span>s = series.slice(<span class="number">0</span>, <span class="number">0</span>);
+            <span class="kw">let </span>s = series.clear();
             <span class="self">self</span>.add_column_by_schema(s, schema)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(<span class="self">self</span>)
         } <span class="kw">else </span>{
@@ -5540,8 +5565,8 @@
             <span class="kw">_ </span>=&gt; {
                 <span class="attr">#[cfg(feature = <span class="string">&quot;sort_multiple&quot;</span>)]
                 </span>{
-                    <span class="kw">if </span>std::env::var(<span class="string">&quot;POLARS_ROW_FMT_SORT&quot;</span>).is_ok() {
-                        argsort_multiple_row_fmt(<span class="kw-2">&amp;</span>by_column, <span class="kw-2">&amp;</span>descending, nulls_last, parallel)<span class="question-mark">?
+                    <span class="kw">if </span>nulls_last || std::env::var(<span class="string">&quot;POLARS_ROW_FMT_SORT&quot;</span>).is_ok() {
+                        argsort_multiple_row_fmt(<span class="kw-2">&amp;</span>by_column, descending, nulls_last, parallel)<span class="question-mark">?
                     </span>} <span class="kw">else </span>{
                         <span class="kw">let </span>(first, by_column, descending) =
                             prepare_arg_sort(by_column, descending)<span class="question-mark">?</span>;
@@ -5969,6 +5994,11 @@
         DataFrame::new_no_checks(col)
     }
 
+    <span class="kw">pub fn </span>clear(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>col = <span class="self">self</span>.columns.iter().map(|s| s.clear()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        DataFrame::new_no_checks(col)
+    }
+
     <span class="attr">#[must_use]
     </span><span class="kw">pub fn </span>slice_par(<span class="kw-2">&amp;</span><span class="self">self</span>, offset: i64, length: usize) -&gt; <span class="self">Self </span>{
         <span class="kw">if </span>offset == <span class="number">0 </span>&amp;&amp; length == <span class="self">self</span>.height() {
@@ -6150,7 +6180,7 @@
     ///
     /// let df2: DataFrame = df1.describe(None)?;
     /// assert_eq!(df2.shape(), (9, 4));
-    /// dbg!(df2);
+    /// println!(&quot;{}&quot;, df2);
     /// # Ok::&lt;(), PolarsError&gt;(())
     /// ```
     ///
@@ -7358,7 +7388,7 @@
         )<span class="question-mark">?</span>;
 
         <span class="comment">// has got columns, but no rows
-        </span><span class="kw">let </span><span class="kw-2">mut </span>df = base.slice(<span class="number">0</span>, <span class="number">0</span>);
+        </span><span class="kw">let </span><span class="kw-2">mut </span>df = base.clear();
         <span class="kw">let </span>out = df.with_column(Series::new(<span class="string">&quot;c&quot;</span>, [<span class="number">1</span>]))<span class="question-mark">?</span>;
         <span class="macro">assert_eq!</span>(out.shape(), (<span class="number">0</span>, <span class="number">3</span>));
         <span class="macro">assert!</span>(out.iter().all(|s| s.len() == <span class="number">0</span>));

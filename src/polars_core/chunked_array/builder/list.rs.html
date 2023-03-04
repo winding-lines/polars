@@ -686,11 +686,6 @@
 <a href="#686" id="686">686</a>
 <a href="#687" id="687">687</a>
 <a href="#688" id="688">688</a>
-<a href="#689" id="689">689</a>
-<a href="#690" id="690">690</a>
-<a href="#691" id="691">691</a>
-<a href="#692" id="692">692</a>
-<a href="#693" id="693">693</a>
 </pre><pre class="rust"><code><span class="kw">use </span>polars_arrow::array::list::AnonymousBuilder;
 <span class="kw">use </span>polars_arrow::prelude::<span class="kw-2">*</span>;
 
@@ -873,8 +868,7 @@
 
 <span class="kw">type </span>LargePrimitiveBuilder&lt;T&gt; = MutableListArray&lt;i64, MutablePrimitiveArray&lt;T&gt;&gt;;
 <span class="kw">type </span>LargeListUtf8Builder = MutableListArray&lt;i64, MutableUtf8Array&lt;i64&gt;&gt;;
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">type </span>LargeListBinaryBuilder = MutableListArray&lt;i64, MutableBinaryArray&lt;i64&gt;&gt;;
+<span class="kw">type </span>LargeListBinaryBuilder = MutableListArray&lt;i64, MutableBinaryArray&lt;i64&gt;&gt;;
 <span class="kw">type </span>LargeListBooleanBuilder = MutableListArray&lt;i64, MutableBooleanArray&gt;;
 
 <span class="kw">pub struct </span>ListUtf8ChunkedBuilder {
@@ -957,15 +951,13 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">pub struct </span>ListBinaryChunkedBuilder {
+<span class="kw">pub struct </span>ListBinaryChunkedBuilder {
     builder: LargeListBinaryBuilder,
     field: Field,
     fast_explode: bool,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">impl </span>ListBinaryChunkedBuilder {
+<span class="kw">impl </span>ListBinaryChunkedBuilder {
     <span class="kw">pub fn </span>new(name: <span class="kw-2">&amp;</span>str, capacity: usize, values_capacity: usize) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>values = MutableBinaryArray::&lt;i64&gt;::with_capacity(values_capacity);
         <span class="kw">let </span>builder = LargeListBinaryBuilder::new_with_capacity(values, capacity);
@@ -1010,8 +1002,7 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">impl </span>ListBuilderTrait <span class="kw">for </span>ListBinaryChunkedBuilder {
+<span class="kw">impl </span>ListBuilderTrait <span class="kw">for </span>ListBinaryChunkedBuilder {
     <span class="kw">fn </span>append_opt_series(<span class="kw-2">&amp;mut </span><span class="self">self</span>, opt_s: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Series&gt;) {
         <span class="kw">match </span>opt_s {
             <span class="prelude-val">Some</span>(s) =&gt; <span class="self">self</span>.append_series(s),
@@ -1168,8 +1159,7 @@
                     Box::new(builder)
                 }};
             }
-            <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-            </span><span class="macro">macro_rules! </span>get_binary_builder {
+            <span class="macro">macro_rules! </span>get_binary_builder {
                 () =&gt; {{
                     <span class="kw">let </span>builder =
                         ListBinaryChunkedBuilder::new(<span class="kw-2">&amp;</span>name, list_capacity, <span class="number">5 </span>* value_capacity);

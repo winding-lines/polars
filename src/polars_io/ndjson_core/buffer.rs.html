@@ -340,7 +340,7 @@
         .iter()
         .map(|(name, dtype)| {
             <span class="kw">let </span>av_buf = (dtype, capacity).into();
-            <span class="kw">let </span>key = KnownKey::from(name);
+            <span class="kw">let </span>key = KnownKey::from(name.as_str());
             <span class="prelude-val">Ok</span>((BufferKey(key), Buffer(name, av_buf)))
         })
         .collect()

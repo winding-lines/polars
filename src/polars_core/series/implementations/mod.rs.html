@@ -555,10 +555,7 @@
 <a href="#555" id="555">555</a>
 <a href="#556" id="556">556</a>
 <a href="#557" id="557">557</a>
-<a href="#558" id="558">558</a>
-<a href="#559" id="559">559</a>
-</pre><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">mod </span>binary;
+</pre><pre class="rust"><code><span class="kw">mod </span>binary;
 <span class="kw">mod </span>boolean;
 <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-categorical&quot;</span>)]
 </span><span class="kw">mod </span>categorical;
@@ -570,7 +567,7 @@
 </span><span class="kw">mod </span>dates_time;
 <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-datetime&quot;</span>)]
 </span><span class="kw">mod </span>datetime;
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-i128&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-decimal&quot;</span>)]
 </span><span class="kw">mod </span>decimal;
 <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-duration&quot;</span>)]
 </span><span class="kw">mod </span>duration;
@@ -1100,8 +1097,7 @@
 }
 
 <span class="kw">impl </span>private::PrivateSeriesNumeric <span class="kw">for </span>SeriesWrap&lt;Utf8Chunked&gt; {}
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">impl </span>private::PrivateSeriesNumeric <span class="kw">for </span>SeriesWrap&lt;BinaryChunked&gt; {}
+<span class="kw">impl </span>private::PrivateSeriesNumeric <span class="kw">for </span>SeriesWrap&lt;BinaryChunked&gt; {}
 <span class="kw">impl </span>private::PrivateSeriesNumeric <span class="kw">for </span>SeriesWrap&lt;ListChunked&gt; {}
 <span class="kw">impl </span>private::PrivateSeriesNumeric <span class="kw">for </span>SeriesWrap&lt;BooleanChunked&gt; {
     <span class="kw">fn </span>bit_repr_is_large(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {

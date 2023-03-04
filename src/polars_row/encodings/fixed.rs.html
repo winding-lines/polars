@@ -172,11 +172,9 @@
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
 <a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
 </pre><pre class="rust"><code><span class="kw">use </span>polars_utils::slice::<span class="kw-2">*</span>;
 
-<span class="kw">use </span><span class="kw">crate</span>::row::RowsEncoded;
-<span class="kw">use </span><span class="kw">crate</span>::sort_field::SortField;
+<span class="kw">use </span><span class="kw">crate</span>::row::{RowsEncoded, SortField};
 
 <span class="doccomment">/// Encodes a value of a particular fixed width type into bytes
 </span><span class="kw">pub trait </span>FixedLengthEncoding: Copy {
@@ -325,7 +323,7 @@
 }
 
 <span class="attr">#[inline]
-</span><span class="kw">fn </span>null_sentinel(field: <span class="kw-2">&amp;</span>SortField) -&gt; u8 {
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>null_sentinel(field: <span class="kw-2">&amp;</span>SortField) -&gt; u8 {
     <span class="kw">if </span>field.nulls_last {
         <span class="number">0xFF
     </span>} <span class="kw">else </span>{

@@ -334,6 +334,7 @@
 <a href="#334" id="334">334</a>
 <a href="#335" id="335">335</a>
 <a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::Write;
 
 <span class="kw">use </span>arrow::temporal_conversions;
@@ -466,7 +467,8 @@
         ))<span class="question-mark">?</span>,
     }
     .map_err(|err| <span class="kw">match </span>value {
-        AnyValue::Datetime(<span class="kw">_</span>, <span class="kw">_</span>, tz) =&gt; {
+        <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-datetime&quot;</span>)]
+        </span>AnyValue::Datetime(<span class="kw">_</span>, <span class="kw">_</span>, tz) =&gt; {
             <span class="comment">// If this is a datetime, then datetime_format was either set or inferred.
             </span><span class="kw">let </span>datetime_format = datetime_format.unwrap();
             <span class="kw">match </span>tz {

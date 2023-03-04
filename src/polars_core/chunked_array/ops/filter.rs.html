@@ -171,22 +171,6 @@
 <a href="#171" id="171">171</a>
 <a href="#172" id="172">172</a>
 <a href="#173" id="173">173</a>
-<a href="#174" id="174">174</a>
-<a href="#175" id="175">175</a>
-<a href="#176" id="176">176</a>
-<a href="#177" id="177">177</a>
-<a href="#178" id="178">178</a>
-<a href="#179" id="179">179</a>
-<a href="#180" id="180">180</a>
-<a href="#181" id="181">181</a>
-<a href="#182" id="182">182</a>
-<a href="#183" id="183">183</a>
-<a href="#184" id="184">184</a>
-<a href="#185" id="185">185</a>
-<a href="#186" id="186">186</a>
-<a href="#187" id="187">187</a>
-<a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
 </pre><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;object&quot;</span>)]
 </span><span class="kw">use </span>arrow::array::Array;
 <span class="kw">use </span>arrow::compute::filter::filter <span class="kw">as </span>filter_fn;
@@ -262,28 +246,12 @@
 
 <span class="kw">impl </span>ChunkFilter&lt;Utf8Type&gt; <span class="kw">for </span>Utf8Chunked {
     <span class="kw">fn </span>filter(<span class="kw-2">&amp;</span><span class="self">self</span>, filter: <span class="kw-2">&amp;</span>BooleanChunked) -&gt; PolarsResult&lt;ChunkedArray&lt;Utf8Type&gt;&gt; {
-        <span class="comment">// broadcast
-        </span><span class="kw">if </span>filter.len() == <span class="number">1 </span>{
-            <span class="kw">return match </span>filter.get(<span class="number">0</span>) {
-                <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="self">self</span>.clone()),
-                <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(Utf8Chunked::full_null(<span class="self">self</span>.name(), <span class="number">0</span>)),
-            };
-        }
-        <span class="macro">check_filter_len!</span>(<span class="self">self</span>, filter);
-        <span class="kw">let </span>(left, filter) = align_chunks_binary(<span class="self">self</span>, filter);
-
-        <span class="kw">let </span>chunks = left
-            .downcast_iter()
-            .zip(filter.downcast_iter())
-            .map(|(left, mask)| filter_fn(left, mask).unwrap())
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-
-        <span class="prelude-val">Ok</span>(<span class="self">self</span>.copy_with_chunks(chunks, <span class="bool-val">true</span>, <span class="bool-val">true</span>))
+        <span class="kw">let </span>out = <span class="self">self</span>.as_binary().filter(filter)<span class="question-mark">?</span>;
+        <span class="kw">unsafe </span>{ <span class="prelude-val">Ok</span>(out.to_utf8()) }
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">impl </span>ChunkFilter&lt;BinaryType&gt; <span class="kw">for </span>BinaryChunked {
+<span class="kw">impl </span>ChunkFilter&lt;BinaryType&gt; <span class="kw">for </span>BinaryChunked {
     <span class="kw">fn </span>filter(<span class="kw-2">&amp;</span><span class="self">self</span>, filter: <span class="kw-2">&amp;</span>BooleanChunked) -&gt; PolarsResult&lt;ChunkedArray&lt;BinaryType&gt;&gt; {
         <span class="comment">// broadcast
         </span><span class="kw">if </span>filter.len() == <span class="number">1 </span>{

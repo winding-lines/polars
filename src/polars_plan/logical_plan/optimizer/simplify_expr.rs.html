@@ -1104,7 +1104,7 @@
                     input: <span class="macro">vec!</span>[left_ae, right_ae],
                     function: StringFunction::ConcatHorizontal(<span class="string">&quot;&quot;</span>.to_string()).into(),
                     options: FunctionOptions {
-                        collect_groups: ApplyOptions::ApplyGroups,
+                        collect_groups: ApplyOptions::ApplyFlat,
                         input_wildcard_expansion: <span class="bool-val">true</span>,
                         auto_explode: <span class="bool-val">true</span>,
                         ..Default::default()

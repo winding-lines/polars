@@ -102,6 +102,10 @@
 <a href="#102" id="102">102</a>
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
 </pre><pre class="rust"><code><span class="attr">#[cfg(feature = <span class="string">&quot;binary_encoding&quot;</span>)]
 </span><span class="kw">use </span>std::borrow::Cow;
 
@@ -171,9 +175,11 @@
     <span class="attr">#[cfg(feature = <span class="string">&quot;binary_encoding&quot;</span>)]
     </span><span class="kw">fn </span>hex_encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Series {
         <span class="kw">let </span>ca = <span class="self">self</span>.as_binary();
-        ca.apply(|s| hex::encode(s).into_bytes().into())
-            .cast_unchecked(<span class="kw-2">&amp;</span>DataType::Utf8)
-            .unwrap()
+        <span class="kw">unsafe </span>{
+            ca.apply(|s| hex::encode(s).into_bytes().into())
+                .cast_unchecked(<span class="kw-2">&amp;</span>DataType::Utf8)
+                .unwrap()
+        }
     }
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;binary_encoding&quot;</span>)]
@@ -199,9 +205,11 @@
     <span class="attr">#[cfg(feature = <span class="string">&quot;binary_encoding&quot;</span>)]
     </span><span class="kw">fn </span>base64_encode(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Series {
         <span class="kw">let </span>ca = <span class="self">self</span>.as_binary();
-        ca.apply(|s| general_purpose::STANDARD.encode(s).into_bytes().into())
-            .cast_unchecked(<span class="kw-2">&amp;</span>DataType::Utf8)
-            .unwrap()
+        <span class="kw">unsafe </span>{
+            ca.apply(|s| general_purpose::STANDARD.encode(s).into_bytes().into())
+                .cast_unchecked(<span class="kw-2">&amp;</span>DataType::Utf8)
+                .unwrap()
+        }
     }
 }
 

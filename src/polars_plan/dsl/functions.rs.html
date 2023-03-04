@@ -1124,6 +1124,44 @@
 <a href="#1124" id="1124">1124</a>
 <a href="#1125" id="1125">1125</a>
 <a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
+<a href="#1158" id="1158">1158</a>
+<a href="#1159" id="1159">1159</a>
+<a href="#1160" id="1160">1160</a>
+<a href="#1161" id="1161">1161</a>
+<a href="#1162" id="1162">1162</a>
+<a href="#1163" id="1163">1163</a>
+<a href="#1164" id="1164">1164</a>
 </pre><pre class="rust"><code><span class="doccomment">//! # Functions
 //!
 //! Functions on expressions that might be useful.
@@ -1379,15 +1417,15 @@
 
 <span class="attr">#[cfg(all(feature = <span class="string">&quot;concat_str&quot;</span>, feature = <span class="string">&quot;strings&quot;</span>))]
 </span><span class="doccomment">/// Horizontally concat string columns in linear time
-</span><span class="kw">pub fn </span>concat_str&lt;E: AsRef&lt;[Expr]&gt;&gt;(s: E, sep: <span class="kw-2">&amp;</span>str) -&gt; Expr {
+</span><span class="kw">pub fn </span>concat_str&lt;E: AsRef&lt;[Expr]&gt;&gt;(s: E, separator: <span class="kw-2">&amp;</span>str) -&gt; Expr {
     <span class="kw">let </span>input = s.as_ref().to_vec();
-    <span class="kw">let </span>sep = sep.to_string();
+    <span class="kw">let </span>separator = separator.to_string();
 
     Expr::Function {
         input,
-        function: StringFunction::ConcatHorizontal(sep).into(),
+        function: StringFunction::ConcatHorizontal(separator).into(),
         options: FunctionOptions {
-            collect_groups: ApplyOptions::ApplyGroups,
+            collect_groups: ApplyOptions::ApplyFlat,
             input_wildcard_expansion: <span class="bool-val">true</span>,
             auto_explode: <span class="bool-val">true</span>,
             ..Default::default()
@@ -1427,10 +1465,16 @@
 }
 
 <span class="doccomment">/// Concat lists entries.
-</span><span class="kw">pub fn </span>concat_lst&lt;E: AsRef&lt;[IE]&gt;, IE: Into&lt;Expr&gt; + Clone&gt;(s: E) -&gt; Expr {
-    <span class="kw">let </span>s = s.as_ref().iter().map(|e| e.clone().into()).collect();
+</span><span class="kw">pub fn </span>concat_lst&lt;E: AsRef&lt;[IE]&gt;, IE: Into&lt;Expr&gt; + Clone&gt;(s: E) -&gt; PolarsResult&lt;Expr&gt; {
+    <span class="kw">let </span>s: Vec&lt;<span class="kw">_</span>&gt; = s.as_ref().iter().map(|e| e.clone().into()).collect();
 
-    Expr::Function {
+    <span class="kw">if </span>s.is_empty() {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(PolarsError::ComputeError(
+            <span class="string">&quot;concat_list needs one or more expressions&quot;</span>.into(),
+        ));
+    }
+
+    <span class="prelude-val">Ok</span>(Expr::Function {
         input: s,
         function: FunctionExpr::ListExpr(ListFunction::Concat),
         options: FunctionOptions {
@@ -1439,7 +1483,7 @@
             fmt_str: <span class="string">&quot;concat_list&quot;</span>,
             ..Default::default()
         },
-    }
+    })
 }
 
 <span class="doccomment">/// Create list entries that are range arrays
@@ -1574,7 +1618,8 @@
     <span class="kw">pub </span>microsecond: <span class="prelude-ty">Option</span>&lt;Expr&gt;,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;temporal&quot;</span>)]
+<span class="doccomment">/// Construct a column of `Datetime` from the provided args.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;temporal&quot;</span>)]
 </span><span class="kw">pub fn </span>datetime(args: DatetimeArgs) -&gt; Expr {
     <span class="kw">use </span>polars_core::export::chrono::NaiveDate;
     <span class="kw">use </span>polars_core::utils::CustomIterTools;
@@ -1689,7 +1734,8 @@
     <span class="kw">pub </span>weeks: <span class="prelude-ty">Option</span>&lt;Expr&gt;,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;temporal&quot;</span>)]
+<span class="doccomment">/// Construct a column of `Duration` from the provided args.
+</span><span class="attr">#[cfg(feature = <span class="string">&quot;temporal&quot;</span>)]
 </span><span class="kw">pub fn </span>duration(args: DurationArgs) -&gt; Expr {
     <span class="kw">let </span>function = SpecialEq::new(Arc::new(<span class="kw">move </span>|s: <span class="kw-2">&amp;mut </span>[Series]| {
         <span class="macro">assert_eq!</span>(s.len(), <span class="number">8</span>);
@@ -1766,7 +1812,8 @@
 ///
 /// # Arguments
 ///
-/// * `name` - A string slice that holds the name of the column
+/// * `name` - A string slice that holds the name of the column. If a column with this name does not exist when the
+///   LazyFrame is collected, an error is returned.
 ///
 /// # Examples
 ///
@@ -1792,12 +1839,12 @@
     }
 }
 
-<span class="doccomment">/// Selects all columns
+<span class="doccomment">/// Selects all columns. Shorthand for `col(&quot;*&quot;)`.
 </span><span class="kw">pub fn </span>all() -&gt; Expr {
     Expr::Wildcard
 }
 
-<span class="doccomment">/// Select multiple columns by name
+<span class="doccomment">/// Select multiple columns by name.
 </span><span class="kw">pub fn </span>cols&lt;I: IntoVec&lt;String&gt;&gt;(names: I) -&gt; Expr {
     <span class="kw">let </span>names = names.into_vec();
     Expr::Columns(names)
@@ -1814,37 +1861,37 @@
     Expr::DtypeColumn(dtypes)
 }
 
-<span class="doccomment">/// Sum all the values in this Expression.
+<span class="doccomment">/// Sum all the values in the column named `name`. Shorthand for `col(name).sum()`.
 </span><span class="kw">pub fn </span>sum(name: <span class="kw-2">&amp;</span>str) -&gt; Expr {
     col(name).sum()
 }
 
-<span class="doccomment">/// Find the minimum of all the values in this Expression.
+<span class="doccomment">/// Find the minimum of all the values in the column named `name`. Shorthand for `col(name).min()`.
 </span><span class="kw">pub fn </span>min(name: <span class="kw-2">&amp;</span>str) -&gt; Expr {
     col(name).min()
 }
 
-<span class="doccomment">/// Find the maximum of all the values in this Expression.
+<span class="doccomment">/// Find the maximum of all the values in the column named `name`. Shorthand for `col(name).max()`.
 </span><span class="kw">pub fn </span>max(name: <span class="kw-2">&amp;</span>str) -&gt; Expr {
     col(name).max()
 }
 
-<span class="doccomment">/// Find the mean of all the values in this Expression.
+<span class="doccomment">/// Find the mean of all the values in the column named `name`. Shorthand for `col(name).mean()`.
 </span><span class="kw">pub fn </span>mean(name: <span class="kw-2">&amp;</span>str) -&gt; Expr {
     col(name).mean()
 }
 
-<span class="doccomment">/// Find the mean of all the values in this Expression.
+<span class="doccomment">/// Find the mean of all the values in the column named `name`. Alias for [`mean`].
 </span><span class="kw">pub fn </span>avg(name: <span class="kw-2">&amp;</span>str) -&gt; Expr {
     col(name).mean()
 }
 
-<span class="doccomment">/// Find the median of all the values in this Expression.
+<span class="doccomment">/// Find the median of all the values in the column named `name`. Shorthand for `col(name).median()`.
 </span><span class="kw">pub fn </span>median(name: <span class="kw-2">&amp;</span>str) -&gt; Expr {
     col(name).median()
 }
 
-<span class="doccomment">/// Find a specific quantile of all the values in this Expression.
+<span class="doccomment">/// Find a specific quantile of all the values in the column named `name`.
 </span><span class="kw">pub fn </span>quantile(name: <span class="kw-2">&amp;</span>str, quantile: Expr, interpol: QuantileInterpolOptions) -&gt; Expr {
     col(name).quantile(quantile, interpol)
 }
@@ -1861,6 +1908,8 @@
 }
 
 <span class="doccomment">/// Apply a closure on the two columns that are evaluated from `Expr` a and `Expr` b.
+///
+/// The closure takes two arguments, each a `Series`. `output_type` must be the output dtype of the resulting `Series`.
 </span><span class="kw">pub fn </span>map_binary&lt;F: <span class="lifetime">&#39;static</span>&gt;(a: Expr, b: Expr, f: F, output_type: GetOutput) -&gt; Expr
 <span class="kw">where
     </span>F: Fn(Series, Series) -&gt; PolarsResult&lt;<span class="prelude-ty">Option</span>&lt;Series&gt;&gt; + Send + Sync,
@@ -1869,7 +1918,10 @@
     a.map_many(function, <span class="kw-2">&amp;</span>[b], output_type)
 }
 
-<span class="kw">pub fn </span>apply_binary&lt;F: <span class="lifetime">&#39;static</span>&gt;(a: Expr, b: Expr, f: F, output_type: GetOutput) -&gt; Expr
+<span class="doccomment">/// Like [`map_binary`], but used in a groupby-aggregation context.
+///
+/// See [`Expr::apply`] for the difference between [`map`](Expr::map) and [`apply`](Expr::apply).
+</span><span class="kw">pub fn </span>apply_binary&lt;F: <span class="lifetime">&#39;static</span>&gt;(a: Expr, b: Expr, f: F, output_type: GetOutput) -&gt; Expr
 <span class="kw">where
     </span>F: Fn(Series, Series) -&gt; PolarsResult&lt;<span class="prelude-ty">Option</span>&lt;Series&gt;&gt; + Send + Sync,
 {
@@ -1930,7 +1982,12 @@
     }
 }
 
-<span class="kw">pub fn </span>reduce_exprs&lt;F: <span class="lifetime">&#39;static</span>, E: AsRef&lt;[Expr]&gt;&gt;(f: F, exprs: E) -&gt; Expr
+<span class="doccomment">/// Analogous to [`Iterator::reduce`](std::iter::Iterator::reduce).
+///
+/// An accumulator is initialized to the series given by the first expression in `exprs`, and then each subsequent value
+/// of the accumulator is computed from `f(acc, next_expr_series)`. If `exprs` is empty, an error is returned when
+/// `collect` is called.
+</span><span class="kw">pub fn </span>reduce_exprs&lt;F: <span class="lifetime">&#39;static</span>, E: AsRef&lt;[Expr]&gt;&gt;(f: F, exprs: E) -&gt; Expr
 <span class="kw">where
     </span>F: Fn(Series, Series) -&gt; PolarsResult&lt;<span class="prelude-ty">Option</span>&lt;Series&gt;&gt; + Send + Sync + Clone,
 {
@@ -2066,7 +2123,9 @@
     }
 }
 
-<span class="doccomment">/// Get the the sum of the values per row
+<span class="doccomment">/// Create a new column with the the sum of the values in each row.
+///
+/// The name of the resulting column will be `&quot;sum&quot;`; use [`alias`](Expr::alias) to choose a different name.
 </span><span class="kw">pub fn </span>sum_exprs&lt;E: AsRef&lt;[Expr]&gt;&gt;(exprs: E) -&gt; Expr {
     <span class="kw">let </span><span class="kw-2">mut </span>exprs = exprs.as_ref().to_vec();
     <span class="kw">let </span>func = |s1, s2| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>s1 + <span class="kw-2">&amp;</span>s2));
@@ -2078,7 +2137,9 @@
     fold_exprs(init, func, exprs).alias(<span class="string">&quot;sum&quot;</span>)
 }
 
-<span class="doccomment">/// Get the the maximum value per row
+<span class="doccomment">/// Create a new column with the the maximum value per row.
+///
+/// The name of the resulting column will be `&quot;max&quot;`; use [`alias`](Expr::alias) to choose a different name.
 </span><span class="kw">pub fn </span>max_exprs&lt;E: AsRef&lt;[Expr]&gt;&gt;(exprs: E) -&gt; Expr {
     <span class="kw">let </span>exprs = exprs.as_ref().to_vec();
     <span class="kw">if </span>exprs.is_empty() {
@@ -2091,7 +2152,10 @@
     reduce_exprs(func, exprs).alias(<span class="string">&quot;max&quot;</span>)
 }
 
-<span class="kw">pub fn </span>min_exprs&lt;E: AsRef&lt;[Expr]&gt;&gt;(exprs: E) -&gt; Expr {
+<span class="doccomment">/// Create a new column with the the minimum value per row.
+///
+/// The name of the resulting column will be `&quot;min&quot;`; use [`alias`](Expr::alias) to choose a different name.
+</span><span class="kw">pub fn </span>min_exprs&lt;E: AsRef&lt;[Expr]&gt;&gt;(exprs: E) -&gt; Expr {
     <span class="kw">let </span>exprs = exprs.as_ref().to_vec();
     <span class="kw">if </span>exprs.is_empty() {
         <span class="kw">return </span>Expr::Columns(Vec::new());
@@ -2103,36 +2167,44 @@
     reduce_exprs(func, exprs).alias(<span class="string">&quot;min&quot;</span>)
 }
 
-<span class="doccomment">/// Evaluate all the expressions with a bitwise or
+<span class="doccomment">/// Create a new column with the the bitwise-or of the elements in each row.
+///
+/// The name of the resulting column is arbitrary; use [`alias`](Expr::alias) to choose a different name.
 </span><span class="kw">pub fn </span>any_exprs&lt;E: AsRef&lt;[Expr]&gt;&gt;(exprs: E) -&gt; Expr {
     <span class="kw">let </span>exprs = exprs.as_ref().to_vec();
     <span class="kw">let </span>func = |s1: Series, s2: Series| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(s1.bool()<span class="question-mark">?</span>.bitor(s2.bool()<span class="question-mark">?</span>).into_series()));
     fold_exprs(lit(<span class="bool-val">false</span>), func, exprs)
 }
 
-<span class="doccomment">/// Evaluate all the expressions with a bitwise and
+<span class="doccomment">/// Create a new column with the the bitwise-and of the elements in each row.
+///
+/// The name of the resulting column is arbitrary; use [`alias`](Expr::alias) to choose a different name.
 </span><span class="kw">pub fn </span>all_exprs&lt;E: AsRef&lt;[Expr]&gt;&gt;(exprs: E) -&gt; Expr {
     <span class="kw">let </span>exprs = exprs.as_ref().to_vec();
     <span class="kw">let </span>func = |s1: Series, s2: Series| <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(s1.bool()<span class="question-mark">?</span>.bitand(s2.bool()<span class="question-mark">?</span>).into_series()));
     fold_exprs(lit(<span class="bool-val">true</span>), func, exprs)
 }
 
-<span class="doccomment">/// [Not](Expr::Not) expression.
+<span class="doccomment">/// Negates a boolean column.
 </span><span class="kw">pub fn </span>not(expr: Expr) -&gt; Expr {
     expr.not()
 }
 
-<span class="doccomment">/// [IsNull](Expr::IsNotNull) expression
+<span class="doccomment">/// A column which is `true` wherever `expr` is null, `false` elsewhere.
 </span><span class="kw">pub fn </span>is_null(expr: Expr) -&gt; Expr {
     expr.is_null()
 }
 
-<span class="doccomment">/// [IsNotNull](Expr::IsNotNull) expression.
+<span class="doccomment">/// A column which is `false` wherever `expr` is null, `true` elsewhere.
 </span><span class="kw">pub fn </span>is_not_null(expr: Expr) -&gt; Expr {
     expr.is_not_null()
 }
 
-<span class="doccomment">/// [Cast](Expr::Cast) expression.
+<span class="doccomment">/// Casts the column given by `Expr` to a different type.
+///
+/// Follows the rules of Rust casting, with the exception that integers and floats can be cast to `DataType::Date` and
+/// `DataType::DateTime(_, _)`. A column consisting entirely of of `Null` can be cast to any type, regardless of the
+/// nominal type of the column.
 </span><span class="kw">pub fn </span>cast(expr: Expr, data_type: DataType) -&gt; Expr {
     Expr::Cast {
         expr: Box::new(expr),
@@ -2172,7 +2244,7 @@
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;dtype-struct&quot;</span>)]
 </span><span class="kw">pub fn </span>as_struct(exprs: <span class="kw-2">&amp;</span>[Expr]) -&gt; Expr {
     map_multiple(
-        |s| StructChunked::new(<span class="string">&quot;&quot;</span>, s).map(|ca| <span class="prelude-val">Some</span>(ca.into_series())),
+        |s| StructChunked::new(s[<span class="number">0</span>].name(), s).map(|ca| <span class="prelude-val">Some</span>(ca.into_series())),
         exprs,
         GetOutput::map_fields(|fld| Field::new(fld[<span class="number">0</span>].name(), DataType::Struct(fld.to_vec()))),
     )
@@ -2183,7 +2255,9 @@
     })
 }
 
-<span class="doccomment">/// Repeat a literal `value` `n` times.
+<span class="doccomment">/// Create a column of length `n` containing `n` copies of the literal `value`. Generally you won&#39;t need this function,
+/// as `lit(value)` already represents a column containing only `value` whose length is automatically set to the correct
+/// number of rows.
 </span><span class="kw">pub fn </span>repeat&lt;L: Literal&gt;(value: L, n_times: Expr) -&gt; Expr {
     <span class="kw">let </span>function = |s: Series, n: Series| {
         <span class="kw">let </span>n = n.get(<span class="number">0</span>).unwrap().extract::&lt;usize&gt;().ok_or_else(|| {
@@ -2208,7 +2282,9 @@
     }
 }
 
-<span class="doccomment">/// Folds the expressions from left to right keeping the first no null values.
+<span class="doccomment">/// Folds the expressions from left to right keeping the first non-null values.
+///
+/// It is an error to provide an empty `exprs`.
 </span><span class="kw">pub fn </span>coalesce(exprs: <span class="kw-2">&amp;</span>[Expr]) -&gt; Expr {
     <span class="kw">let </span>input = exprs.to_vec();
     Expr::Function {
@@ -2223,7 +2299,7 @@
     }
 }
 
-<span class="doccomment">///  Create a date range from a `start` and `stop` expression.
+<span class="doccomment">/// Create a date range, named `name`, from a `start` and `stop` expression.
 </span><span class="attr">#[cfg(feature = <span class="string">&quot;temporal&quot;</span>)]
 </span><span class="kw">pub fn </span>date_range(
     name: String,

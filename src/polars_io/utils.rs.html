@@ -140,6 +140,21 @@
 <a href="#140" id="140">140</a>
 <a href="#141" id="141">141</a>
 <a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::path::{Path, PathBuf};
 
 <span class="kw">use </span>dirs::home_dir;
@@ -234,6 +249,21 @@
                 <span class="kw-2">*</span>s = <span class="kw-2">&amp;*</span>s + previous;
             }
             previous += <span class="kw-2">*</span>n_read;
+        }
+    }
+}
+
+<span class="doccomment">/// Because of threading every row starts from `0` or from `offset`.
+/// We must correct that so that they are monotonically increasing.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>update_row_counts2(dfs: <span class="kw-2">&amp;mut </span>[DataFrame], offset: IdxSize) {
+    <span class="kw">if </span>!dfs.is_empty() {
+        <span class="kw">let </span><span class="kw-2">mut </span>previous = dfs[<span class="number">0</span>].height() <span class="kw">as </span>IdxSize + offset;
+        <span class="kw">for </span>df <span class="kw">in </span><span class="kw-2">&amp;mut </span>dfs[<span class="number">1</span>..] {
+            <span class="kw">let </span>n_read = df.height() <span class="kw">as </span>IdxSize;
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = df.get_columns_mut().get_mut(<span class="number">0</span>) {
+                <span class="kw-2">*</span>s = <span class="kw-2">&amp;*</span>s + previous;
+            }
+            previous += n_read;
         }
     }
 }

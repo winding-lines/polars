@@ -750,6 +750,39 @@
 <a href="#750" id="750">750</a>
 <a href="#751" id="751">751</a>
 <a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::io::{Read, Seek};
 <span class="kw">use </span>std::ops::Deref;
 <span class="kw">use </span>std::path::PathBuf;
@@ -779,7 +812,6 @@
 <span class="kw">use </span><span class="kw">crate</span>::logical_plan::schema::{det_join_schema, FileInfo};
 <span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::utils;
-<span class="kw">use </span><span class="kw">crate</span>::utils::{combine_predicates_expr, has_expr};
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>prepare_projection(
     exprs: Vec&lt;Expr&gt;,
@@ -1122,12 +1154,21 @@
         <span class="kw">let </span><span class="kw-2">mut </span>new_schema = (<span class="kw-2">**</span>schema).clone();
         <span class="kw">let </span>(exprs, <span class="kw">_</span>) = <span class="macro">try_delayed!</span>(prepare_projection(exprs, <span class="kw-2">&amp;</span>schema), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, into);
 
+        <span class="kw">let </span><span class="kw-2">mut </span>output_names = PlHashSet::with_capacity(exprs.len());
+
         <span class="kw">let </span><span class="kw-2">mut </span>arena = Arena::with_capacity(<span class="number">8</span>);
         <span class="kw">for </span>e <span class="kw">in </span><span class="kw-2">&amp;</span>exprs {
             <span class="kw">let </span>field = e
                 .to_field_amortized(<span class="kw-2">&amp;</span>schema, Context::Default, <span class="kw-2">&amp;mut </span>arena)
                 .unwrap();
-            new_schema.with_column(field.name().to_string(), field.data_type().clone());
+            <span class="kw">if </span>!output_names.insert(field.name().clone()) {
+                <span class="kw">let </span>msg = <span class="macro">format!</span>(
+                    <span class="string">&quot;The name: &#39;{}&#39; passed to `LazyFrame.with_columns` is duplicate&quot;</span>,
+                    field.name()
+                );
+                <span class="kw">return </span><span class="macro">raise_err!</span>(PolarsError::ComputeError(msg.into()), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, into);
+            }
+            new_schema.with_column(field.name().clone(), field.data_type().clone());
             arena.clear();
         }
 
@@ -1180,18 +1221,43 @@
             <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
         }) {
             <span class="kw">let </span>schema = <span class="macro">try_delayed!</span>(<span class="self">self</span>.<span class="number">0</span>.schema(), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, into);
-            <span class="kw">let </span>rewritten = <span class="macro">try_delayed!</span>(
+            <span class="kw">let </span><span class="kw-2">mut </span>rewritten = <span class="macro">try_delayed!</span>(
                 rewrite_projections(<span class="macro">vec!</span>[predicate], <span class="kw-2">&amp;</span>schema, <span class="kw-2">&amp;</span>[]),
                 <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>,
                 into
             );
-            <span class="kw">if </span>rewritten.is_empty() {
-                <span class="kw">let </span>msg = <span class="string">&quot;The predicate expanded to zero expressions. \
+            <span class="kw">match </span>rewritten.len() {
+                <span class="number">1 </span>=&gt; {
+                    <span class="comment">// all good
+                    </span>rewritten.pop().unwrap()
+                }
+                <span class="number">0 </span>=&gt; {
+                    <span class="kw">let </span>msg = <span class="string">&quot;The predicate expanded to zero expressions. \
                 This may for example be caused by a regex not matching column names or \
                 a column dtype match not hitting any dtypes in the DataFrame&quot;</span>;
-                <span class="kw">return </span><span class="macro">raise_err!</span>(PolarsError::ComputeError(msg.into()), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, into);
+                    <span class="kw">return </span><span class="macro">raise_err!</span>(PolarsError::ComputeError(msg.into()), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, into);
+                }
+                <span class="kw">_ </span>=&gt; {
+                    <span class="kw">let </span><span class="kw-2">mut </span>expanded = String::new();
+                    <span class="kw">for </span>e <span class="kw">in </span>rewritten.iter().take(<span class="number">5</span>) {
+                        expanded.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;\t{e},\n&quot;</span>))
+                    }
+                    <span class="comment">// pop latest comma
+                    </span>expanded.pop();
+                    <span class="kw">if </span>rewritten.len() &gt; <span class="number">5 </span>{
+                        expanded.push_str(<span class="string">&quot;\t...\n&quot;</span>)
+                    }
+
+                    <span class="kw">let </span>msg = <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">&quot;python&quot;</span>) {
+                        <span class="macro">format!</span>(<span class="string">&quot;The predicate passed to &#39;LazyFrame.filter&#39; expanded to multiple expressions: \n\n{expanded}\n\
+                    This is ambiguous. Try to combine the predicates with the &#39;all&#39; or `any&#39; expression.&quot;</span>)
+                    } <span class="kw">else </span>{
+                        <span class="macro">format!</span>(<span class="string">&quot;The predicate passed to &#39;LazyFrame.filter&#39; expanded to multiple expressions: \n\n{expanded}\n\
+                    This is ambiguous. Try to combine the predicates with the &#39;all_exprs&#39; or `any_exprs&#39; expression.&quot;</span>)
+                    };
+                    <span class="kw">return </span><span class="macro">raise_err!</span>(PolarsError::ComputeError(msg.into()), <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>, into);
+                }
             }
-            combine_predicates_expr(rewritten.into_iter())
         } <span class="kw">else </span>{
             predicate
         };
@@ -1338,7 +1404,7 @@
                 <span class="kw">if let </span>Expr::Column(name) = e {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(DataType::List(inner)) = schema.get(name) {
                         <span class="kw">let </span>inner = <span class="kw-2">*</span>inner.clone();
-                        schema.with_column(name.to_string(), inner);
+                        schema.with_column(name.as_ref().into(), inner);
                     }
 
                     (<span class="kw-2">**</span>name).to_owned()
@@ -1467,12 +1533,12 @@
         .variable_name
         .as_ref()
         .cloned()
-        .unwrap_or_else(|| <span class="string">&quot;variable&quot;</span>.to_string());
+        .unwrap_or_else(|| <span class="string">&quot;variable&quot;</span>.into());
     <span class="kw">let </span>value_name = args
         .value_name
         .as_ref()
         .cloned()
-        .unwrap_or_else(|| <span class="string">&quot;value&quot;</span>.to_string());
+        .unwrap_or_else(|| <span class="string">&quot;value&quot;</span>.into());
 
     new_schema.with_column(variable_name, DataType::Utf8);
 

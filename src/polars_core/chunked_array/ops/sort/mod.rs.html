@@ -966,15 +966,9 @@
 <a href="#966" id="966">966</a>
 <a href="#967" id="967">967</a>
 <a href="#968" id="968">968</a>
-<a href="#969" id="969">969</a>
-<a href="#970" id="970">970</a>
-<a href="#971" id="971">971</a>
-<a href="#972" id="972">972</a>
-<a href="#973" id="973">973</a>
-<a href="#974" id="974">974</a>
 </pre><pre class="rust"><code><span class="kw">mod </span>arg_sort;
 <span class="attr">#[cfg(feature = <span class="string">&quot;sort_multiple&quot;</span>)]
-</span><span class="kw">mod </span>arg_sort_multiple;
+</span><span class="kw">pub mod </span>arg_sort_multiple;
 <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-categorical&quot;</span>)]
 </span><span class="kw">mod </span>categorical;
 
@@ -982,7 +976,8 @@
 <span class="kw">use </span>std::hint::unreachable_unchecked;
 <span class="kw">use </span>std::iter::FromIterator;
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>arg_sort_multiple::argsort_multiple_row_fmt;
+<span class="attr">#[cfg(feature = <span class="string">&quot;sort_multiple&quot;</span>)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>arg_sort_multiple::argsort_multiple_row_fmt;
 <span class="kw">use </span>arrow::bitmap::MutableBitmap;
 <span class="kw">use </span>arrow::buffer::Buffer;
 <span class="kw">use </span>num_traits::Float;
@@ -1492,13 +1487,7 @@
     }
 
     <span class="kw">fn </span>arg_sort(<span class="kw-2">&amp;</span><span class="self">self</span>, options: SortOptions) -&gt; IdxCa {
-        arg_sort::arg_sort(
-            <span class="self">self</span>.name(),
-            <span class="self">self</span>.downcast_iter().map(|arr| arr.iter()),
-            options,
-            <span class="self">self</span>.null_count(),
-            <span class="self">self</span>.len(),
-        )
+        <span class="self">self</span>.as_binary().arg_sort(options)
     }
 
     <span class="attr">#[cfg(feature = <span class="string">&quot;sort_multiple&quot;</span>)]
@@ -1511,23 +1500,11 @@
     /// uphold this contract. If not, it will panic.
     ///
     </span><span class="kw">fn </span>arg_sort_multiple(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>[Series], descending: <span class="kw-2">&amp;</span>[bool]) -&gt; PolarsResult&lt;IdxCa&gt; {
-        args_validate(<span class="self">self</span>, other, descending)<span class="question-mark">?</span>;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>count: IdxSize = <span class="number">0</span>;
-        <span class="kw">let </span>vals: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
-            </span>.into_iter()
-            .map(|v| {
-                <span class="kw">let </span>i = count;
-                count += <span class="number">1</span>;
-                (i, v)
-            })
-            .collect_trusted();
-        arg_sort_multiple_impl(vals, other, descending)
+        <span class="self">self</span>.as_binary().arg_sort_multiple(other, descending)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-</span><span class="kw">impl </span>ChunkSort&lt;BinaryType&gt; <span class="kw">for </span>BinaryChunked {
+<span class="kw">impl </span>ChunkSort&lt;BinaryType&gt; <span class="kw">for </span>BinaryChunked {
     <span class="kw">fn </span>sort_with(<span class="kw-2">&amp;</span><span class="self">self</span>, options: SortOptions) -&gt; ChunkedArray&lt;BinaryType&gt; {
         <span class="macro">sort_with_fast_path!</span>(<span class="self">self</span>, options);
         <span class="kw">let </span><span class="kw-2">mut </span>v: Vec&lt;<span class="kw-2">&amp;</span>[u8]&gt; = <span class="kw">if </span><span class="self">self</span>.null_count() &gt; <span class="number">0 </span>{
@@ -1704,16 +1681,23 @@
 }
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;sort_multiple&quot;</span>)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>convert_sort_column_multi_sort(s: <span class="kw-2">&amp;</span>Series) -&gt; PolarsResult&lt;Series&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>convert_sort_column_multi_sort(
+    s: <span class="kw-2">&amp;</span>Series,
+    row_ordering: bool,
+) -&gt; PolarsResult&lt;Series&gt; {
     <span class="kw">use </span>DataType::<span class="kw-2">*</span>;
     <span class="kw">let </span>out = <span class="kw">match </span>s.dtype() {
         <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-categorical&quot;</span>)]
         </span>Categorical(<span class="kw">_</span>) =&gt; s.rechunk(),
-        <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-binary&quot;</span>)]
-        </span>Binary =&gt; s.clone(),
-        Utf8 =&gt; s.clone(),
-        <span class="comment">// TODO! remove this. With row ordering we can do this easily
-        </span>Boolean =&gt; s.cast(<span class="kw-2">&amp;</span>UInt8).unwrap(),
+        Binary =&gt; s.clone(),
+        Utf8 =&gt; s.cast(<span class="kw-2">&amp;</span>Binary).unwrap(),
+        Boolean =&gt; {
+            <span class="kw">if </span>row_ordering {
+                s.clone()
+            } <span class="kw">else </span>{
+                s.cast(<span class="kw-2">&amp;</span>UInt8).unwrap()
+            }
+        }
         <span class="kw">_ </span>=&gt; {
             <span class="kw">let </span>phys = s.to_physical_repr().into_owned();
             <span class="kw">if </span>!phys.dtype().is_numeric() {
@@ -1727,6 +1711,14 @@
     <span class="prelude-val">Ok</span>(out)
 }
 
+<span class="kw">pub fn </span>_broadcast_descending(n_cols: usize, descending: <span class="kw-2">&amp;mut </span>Vec&lt;bool&gt;) {
+    <span class="kw">if </span>n_cols &gt; descending.len() &amp;&amp; descending.len() == <span class="number">1 </span>{
+        <span class="kw">while </span>n_cols != descending.len() {
+            descending.push(descending[<span class="number">0</span>]);
+        }
+    }
+}
+
 <span class="attr">#[cfg(feature = <span class="string">&quot;sort_multiple&quot;</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>prepare_arg_sort(
     columns: Vec&lt;Series&gt;,
@@ -1736,17 +1728,13 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>columns = columns
         .iter()
-        .map(convert_sort_column_multi_sort)
+        .map(|s| convert_sort_column_multi_sort(s, <span class="bool-val">false</span>))
         .collect::&lt;PolarsResult&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;&gt;()<span class="question-mark">?</span>;
 
     <span class="kw">let </span>first = columns.remove(<span class="number">0</span>);
 
     <span class="comment">// broadcast ordering
-    </span><span class="kw">if </span>n_cols &gt; descending.len() &amp;&amp; descending.len() == <span class="number">1 </span>{
-        <span class="kw">while </span>n_cols != descending.len() {
-            descending.push(descending[<span class="number">0</span>]);
-        }
-    }
+    </span>_broadcast_descending(n_cols, <span class="kw-2">&amp;mut </span>descending);
     <span class="prelude-val">Ok</span>((first, columns, descending))
 }
 

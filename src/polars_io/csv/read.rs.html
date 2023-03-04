@@ -578,18 +578,6 @@
 <a href="#578" id="578">578</a>
 <a href="#579" id="579">579</a>
 <a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
 </pre><pre class="rust"><code><span class="kw">use super</span>::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::csv::read_impl::{to_batched_owned, BatchedCsvReader, OwnedBatchedCsvReader};
 <span class="kw">use </span><span class="kw">crate</span>::csv::utils::infer_file_schema;
@@ -703,11 +691,11 @@
     delimiter: <span class="prelude-ty">Option</span>&lt;u8&gt;,
     has_header: bool,
     ignore_errors: bool,
-    <span class="kw">pub</span>(<span class="kw">crate</span>) schema: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Schema&gt;,
+    <span class="kw">pub</span>(<span class="kw">crate</span>) schema: <span class="prelude-ty">Option</span>&lt;SchemaRef&gt;,
     encoding: CsvEncoding,
     n_threads: <span class="prelude-ty">Option</span>&lt;usize&gt;,
     path: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
-    schema_overwrite: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Schema&gt;,
+    schema_overwrite: <span class="prelude-ty">Option</span>&lt;SchemaRef&gt;,
     dtype_overwrite: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[DataType]&gt;,
     sample_size: usize,
     chunk_size: usize,
@@ -721,8 +709,6 @@
     skip_rows_after_header: usize,
     try_parse_dates: bool,
     row_count: <span class="prelude-ty">Option</span>&lt;RowCount&gt;,
-    <span class="comment">// temporary schema needed for batch lifetimes
-    </span>owned_schema: <span class="prelude-ty">Option</span>&lt;Box&lt;Schema&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, R&gt; CsvReader&lt;<span class="lifetime">&#39;a</span>, R&gt;
@@ -770,7 +756,7 @@
     /// in the csv parser and expects a complete Schema.
     ///
     /// It is recommended to use [with_dtypes](Self::with_dtypes) instead.
-    </span><span class="kw">pub fn </span>with_schema(<span class="kw-2">mut </span><span class="self">self</span>, schema: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Schema) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>with_schema(<span class="kw-2">mut </span><span class="self">self</span>, schema: SchemaRef) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.schema = <span class="prelude-val">Some</span>(schema);
         <span class="self">self
     </span>}
@@ -825,7 +811,7 @@
 
     <span class="doccomment">/// Overwrite the schema with the dtypes in this given Schema. The given schema may be a subset
     /// of the total schema.
-    </span><span class="kw">pub fn </span>with_dtypes(<span class="kw-2">mut </span><span class="self">self</span>, schema: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Schema&gt;) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>with_dtypes(<span class="kw-2">mut </span><span class="self">self</span>, schema: <span class="prelude-ty">Option</span>&lt;SchemaRef&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">self</span>.schema_overwrite = schema;
         <span class="self">self
     </span>}
@@ -923,7 +909,7 @@
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, R: MmapBytesReader + <span class="lifetime">&#39;a</span>&gt; CsvReader&lt;<span class="lifetime">&#39;a</span>, R&gt; {
     <span class="kw">fn </span>core_reader&lt;<span class="lifetime">&#39;b</span>&gt;(
         <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span><span class="kw-2">mut </span><span class="self">self</span>,
-        schema: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>Schema&gt;,
+        schema: <span class="prelude-ty">Option</span>&lt;SchemaRef&gt;,
         to_cast: Vec&lt;Field&gt;,
     ) -&gt; PolarsResult&lt;CoreReader&lt;<span class="lifetime">&#39;b</span>&gt;&gt;
     <span class="kw">where
@@ -939,7 +925,7 @@
             <span class="self">self</span>.delimiter,
             <span class="self">self</span>.has_header,
             <span class="self">self</span>.ignore_errors,
-            <span class="self">self</span>.schema,
+            <span class="self">self</span>.schema.clone(),
             std::mem::take(<span class="kw-2">&amp;mut </span><span class="self">self</span>.columns),
             <span class="self">self</span>.encoding,
             <span class="self">self</span>.n_threads,
@@ -996,24 +982,14 @@
     }
 
     <span class="kw">pub fn </span>batched_borrowed(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">self</span>) -&gt; PolarsResult&lt;BatchedCsvReader&lt;<span class="lifetime">&#39;a</span>&gt;&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(schema) = <span class="self">self</span>.schema_overwrite {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(schema) = <span class="self">self</span>.schema_overwrite.as_deref() {
             <span class="kw">let </span>(schema, to_cast, has_cat) = <span class="self">self</span>.prepare_schema_overwrite(schema);
-            <span class="self">self</span>.owned_schema = <span class="prelude-val">Some</span>(Box::new(schema));
+            <span class="kw">let </span>schema = Arc::new(schema);
 
-            <span class="comment">// safety
-            // we boxed the schema and we refer to the boxed pointer
-            // the schema will drop once self drops
-            // so it is bound to &#39;a
-            </span><span class="kw">let </span>schema = <span class="kw">unsafe </span>{
-                std::mem::transmute::&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Schema&gt;, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Schema&gt;&gt;(
-                    <span class="self">self</span>.owned_schema.as_ref().map(|b| b.as_ref()),
-                )
-            };
-
-            <span class="kw">let </span>csv_reader = <span class="self">self</span>.core_reader(schema, to_cast)<span class="question-mark">?</span>;
+            <span class="kw">let </span>csv_reader = <span class="self">self</span>.core_reader(<span class="prelude-val">Some</span>(schema), to_cast)<span class="question-mark">?</span>;
             csv_reader.batched(has_cat)
         } <span class="kw">else </span>{
-            <span class="kw">let </span>csv_reader = <span class="self">self</span>.core_reader(<span class="self">self</span>.schema, <span class="macro">vec!</span>[])<span class="question-mark">?</span>;
+            <span class="kw">let </span>csv_reader = <span class="self">self</span>.core_reader(<span class="self">self</span>.schema.clone(), <span class="macro">vec!</span>[])<span class="question-mark">?</span>;
             csv_reader.batched(<span class="bool-val">false</span>)
         }
     }
@@ -1082,14 +1058,13 @@
             skip_rows_after_header: <span class="number">0</span>,
             try_parse_dates: <span class="bool-val">false</span>,
             row_count: <span class="prelude-val">None</span>,
-            owned_schema: <span class="prelude-val">None</span>,
         }
     }
 
     <span class="doccomment">/// Read the file and create the DataFrame.
     </span><span class="kw">fn </span>finish(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; PolarsResult&lt;DataFrame&gt; {
         <span class="kw">let </span>rechunk = <span class="self">self</span>.rechunk;
-        <span class="kw">let </span>schema_overwrite = <span class="self">self</span>.schema_overwrite;
+        <span class="kw">let </span>schema_overwrite = <span class="self">self</span>.schema_overwrite.clone();
         <span class="kw">let </span>dtype_overwrite = <span class="self">self</span>.dtype_overwrite;
         <span class="kw">let </span>should_parse_dates = <span class="self">self</span>.try_parse_dates;
         <span class="kw">let </span>low_memory = <span class="self">self</span>.low_memory;
@@ -1097,7 +1072,7 @@
         <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-categorical&quot;</span>)]
         </span><span class="kw">let </span><span class="kw-2">mut </span>_cat_lock = <span class="prelude-val">None</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>df = <span class="kw">if let </span><span class="prelude-val">Some</span>(schema) = schema_overwrite {
+        <span class="kw">let </span><span class="kw-2">mut </span>df = <span class="kw">if let </span><span class="prelude-val">Some</span>(schema) = schema_overwrite.as_deref() {
             <span class="kw">let </span>(schema, to_cast, _has_cat) = <span class="self">self</span>.prepare_schema_overwrite(schema);
 
             <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-categorical&quot;</span>)]
@@ -1105,13 +1080,14 @@
                 _cat_lock = <span class="prelude-val">Some</span>(polars_core::IUseStringCache::new())
             }
 
-            <span class="kw">let </span><span class="kw-2">mut </span>csv_reader = <span class="self">self</span>.core_reader(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>schema), to_cast)<span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>csv_reader = <span class="self">self</span>.core_reader(<span class="prelude-val">Some</span>(Arc::new(schema)), to_cast)<span class="question-mark">?</span>;
             csv_reader.as_df()<span class="question-mark">?
         </span>} <span class="kw">else </span>{
             <span class="attr">#[cfg(feature = <span class="string">&quot;dtype-categorical&quot;</span>)]
             </span>{
                 <span class="kw">let </span>has_cat = <span class="self">self
                     </span>.schema
+                    .clone()
                     .map(|schema| {
                         schema
                             .iter_dtypes()
@@ -1122,7 +1098,7 @@
                     _cat_lock = <span class="prelude-val">Some</span>(polars_core::IUseStringCache::new())
                 }
             }
-            <span class="kw">let </span><span class="kw-2">mut </span>csv_reader = <span class="self">self</span>.core_reader(<span class="self">self</span>.schema, <span class="macro">vec!</span>[])<span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>csv_reader = <span class="self">self</span>.core_reader(<span class="self">self</span>.schema.clone(), <span class="macro">vec!</span>[])<span class="question-mark">?</span>;
             csv_reader.as_df()<span class="question-mark">?
         </span>};
 
@@ -1141,16 +1117,16 @@
         </span><span class="kw">if </span>should_parse_dates {
             <span class="comment">// determine the schema that&#39;s given by the user. That should not be changed
             </span><span class="kw">let </span>fixed_schema = <span class="kw">match </span>(schema_overwrite, dtype_overwrite) {
-                (<span class="prelude-val">Some</span>(schema), <span class="kw">_</span>) =&gt; Cow::Borrowed(schema),
+                (<span class="prelude-val">Some</span>(schema), <span class="kw">_</span>) =&gt; schema,
                 (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(dtypes)) =&gt; {
                     <span class="kw">let </span>fields = dtypes
                         .iter()
                         .zip(df.get_column_names())
                         .map(|(dtype, name)| Field::new(name, dtype.clone()));
 
-                    Cow::Owned(Schema::from(fields))
+                    Arc::new(Schema::from(fields))
                 }
-                <span class="kw">_ </span>=&gt; Cow::Owned(Schema::default()),
+                <span class="kw">_ </span>=&gt; Arc::default(),
             };
             df = parse_dates(df, <span class="kw-2">&amp;</span>fixed_schema)
         }
